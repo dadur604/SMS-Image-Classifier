@@ -19,17 +19,18 @@ module.exports.sms_webhook = async event => {
   }
   
   const body = queryString.parse(event.body);
-  
-  console.log(body);
-  
+    
   const response = new MessagingResponse();
   const message = response.message();
   
-  if (body.NumMedia > 0 ) {
+  const MediaObjects = [];
+  
+  for (let i = 0; i < body.NumMedia; ++i) {
+	  const MediaUrl = body["MediaUrl" + i];
 	  
 	  const image_binary = await axios({
 		method: 'get',
-		url: body.MediaUrl0,
+		url: MediaUrl,
 		responseType: 'arraybuffer'
 	  });
 	  
@@ -44,13 +45,31 @@ module.exports.sms_webhook = async event => {
 		console.log(`Confidence: ${object.score}`);
 	  }
 	  
-	  if (objects.length === 0) {
-		  message.body('Couldn\'t find anything!');
-	  } else {
+	  if (objects.length >= 0) {
 		const topObject = objects.sort((a, b) => {return a.score > b.score})[0];
 	  
-		message.body(`I spy a ${topObject.name}!\n...at least i\'m ${(topObject.score * 100).toFixed()}% sure...`);
+		MediaObjects.push({name: topObject.name, score: topObject.score});
 	  }
+  }
+  
+  if (MediaObjects.length === 0) {
+	message.body(`Couldn't find anything! :(`);
+  } else if (MediaObjects.length === 1) {
+	message.body(`I spy a ${MediaObjects[0].name}!\n...at least i\'m ${(MediaObjects[0].score * 100).toFixed()}% sure...`);
+  } else {
+	let responseBody = "I spy a ";
+	
+	for (let i = 0; i < MediaObjects.length; ++i) {
+	  responseBody += MediaObjects[i].name;
+	  responseBody += ` (${(MediaObjects[i].score * 100).toFixed()}%)`;
+	  if (i != (MediaObjects.length-1)) {
+		responseBody += ', and a ';
+	  } else {
+		responseBody += '!';
+	  }
+	}
+	
+	message.body(responseBody);
   }
   
   return {
