@@ -45,7 +45,7 @@ module.exports.sms_webhook = async event => {
 		console.log(`Confidence: ${object.score}`);
 	  }
 	  
-	  if (objects.length >= 0) {
+	  if (objects.length > 0) {
 		const topObject = objects.sort((a, b) => {return a.score > b.score})[0];
 	  
 		MediaObjects.push({name: topObject.name, score: topObject.score});
