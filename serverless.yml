@@ -1,0 +1,26 @@
+service: pearlproject
+#app: your-app-name
+#org: your-org-name
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+
+stage: dev
+region: us-west-1
+
+#  environment:
+#    variable1: value1
+
+functions:
+  sms_webhook:
+    package:
+      include:
+        - gc/keys.json
+    environment:
+      "GOOGLE_APPLICATION_CREDENTIALS": "./gc/keys.json"
+    handler: handler.sms_webhook
+    events:
+      - http:
+          path: sms_in
+          method: post
